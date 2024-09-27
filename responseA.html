@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ball Hop Game</title>
+<style>
+    #gameArea {
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: radial-gradient(circle at center, #f0f8ff, #add8e6);
+        position: relative;
+        overflow: hidden;
+        margin: 20px auto;
+        border: 2px solid #000;
+    }
+    #ball {
+        width: 20px;
+        height: 20px;
+        background-color: #ff4500;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    #centerOfMass {
+        width: 10px;
+        height: 10px;
+        background-color: #000;
+        border-radius: 50%;
+        position: absolute;
+    }
+    button {
+        display: block;
+        margin: 10px auto;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+</style>
+</head>
+<body>
+<div id="gameArea">
+    <div id="ball"></div>
+    <div id="centerOfMass"></div>
+</div>
+<button onclick="startGame()">Start Game</button>
+
+<script>
+    const gameArea = document.getElementById('gameArea');
+    const ball = document.getElementById('ball');
+    const centerOfMass = document.getElementById('centerOfMass');
+    let dx = 2, dy = 0, gravity = 0.5, jump = -10, attracted = false;
+    let centerX, centerY, radius;
+
+    function startGame() {
+        centerX = gameArea.offsetWidth / 2;
+        centerY = gameArea.offsetHeight / 2;
+        radius = centerX - 20; // considering some margin for the ball
+
+        // Initial position and random attraction point
+        setRandomAttractionPoint();
+        update();
+    }
+
+    function setRandomAttractionPoint() {
+        let angle = Math.random() * 2 * Math.PI;
+        let x = centerX + (radius * Math.cos(angle));
+        let y = centerY + (radius * Math.sin(angle));
+        centerOfMass.style.left = `${x - 5}px`; // -5 to center the point
+        centerOfMass.style.top = `${y - 5}px`;
+    }
+
+    function update() {
+        // Basic physics
+        dy += gravity;
+        let newX = ball.offsetLeft + dx;
+        let newY = ball.offsetTop + dy;
+
+        // Attraction towards center of mass
+        let angleToCenter = Math.atan2(centerOfMass.offsetTop - newY, centerOfMass.offsetLeft - newX);
+        dx += Math.cos(angleToCenter) * 0.1; // Attraction force
+        dy += Math.sin(angleToCenter) * 0.1;
+
+        // Boundary check
+        if (Math.sqrt((newX - centerX)**2 + (newY - centerY)**2) + 10 >= radius) { // +10 for ball radius
+            // Reset or handle game over
+            alert('Game Over!');
+            return;
+        }
+
+        // Update position
+        ball.style.left = `${newX}px`;
+        ball.style.top = `${newY}px`;
+
+        requestAnimationFrame(update);
+    }
+
+    // Event listeners for jumping
+    window.addEventListener('keydown', function(event) {
+        if (event.code === 'Space') jumpBall();
+    });
+    gameArea.addEventListener('click', jumpBall);
+
+    function jumpBall() {
+        if (dy > -1) dy = jump; // Only allow jump if ball is not already jumping high
+    }
+</script>
+</body>
+</html>

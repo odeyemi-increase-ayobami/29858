@@ -1,23 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Home</title>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <!--
-      Need a visual blank slate?
-      Remove all code in `styles.css`!
-    -->
-    <link rel="stylesheet" href="styles.css" />
-    <script type="module" src="script.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css?family=Cousine&display=swap");
+
+      * {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-50 -50 100 100' transform='rotate(45)' opacity='0.1' width='100' height='100'%3E%3Ccircle r='20' fill='hsl(128, 40%25, 45%25)' id='circle' /%3E%3Cg id='circles'%3E%3Cuse href='%23circle' y='30' opacity='0.3' /%3E%3Cuse href='%23circle' y='-30' opacity='0.3' /%3E%3C/g%3E%3Cuse href='%23circles' transform='rotate(90)' /%3E%3C/svg%3E"),
+          hsl(0, 0%, 10%);
+        background-size: 10px;
+        color: hsl(30, 15%, 90%);
+        font-family: "Cousine", monospace;
+      }
+      body > * + * {
+        margin-top: 1.5rem;
+      }
+
+      button {
+        display: block;
+        color: inherit;
+        font-family: inherit;
+        color: inherit;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 1.25rem;
+        font-weight: 700;
+        padding: 0.75rem 1rem;
+        border-radius: 5px;
+        background: hsl(128, 40%, 45%);
+        border: 4px solid hsl(128, 40%, 45%);
+        outline: none;
+      }
+      button:focus {
+        border-color: currentColor;
+        box-shadow: 0 0 10px hsl(128, 40%, 45%);
+      }
+    </style>
   </head>
   <body>
-    <nav>
-      <a href="/" aria-current="page">Home</a>
-      <a href="/page2.html">Other page</a>
-    </nav>
-    <main>
-      <h1>Home page</h1>
-    </main>
+    <!-- 
+1. press play
+1. press the window/space bar to keep hopping
+
+beware: gravity ain't what is used to be
+-->
+    <script>
+      // html
+      const { innerWidth, innerHeight } = window;
+      const size = Math.min(400, innerWidth * 0.9, innerHeight * 0.9);
+      const width = size;
+      const height = size;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      document.body.appendChild(canvas);
+
+      const button = document.createElement("button");
+      button.textContent = "Play";
+      document.body.appendChild(button);
+
+      // canvas
+      const context = canvas.getContext("2d");
+      context.translate(width / 2, height / 2);
+      const lineWidth = 15;
+      const radius = width / 2 - lineWidth / 2;
+      context.lineWidth = lineWidth;
+      context.fillStyle = "hsl(128, 40%, 45%)";
+
+      const ball = {
+        x: 0,
+        y: 0,
+        r: 20,
+      };
+
+      // physics
+      const physics = {
+        direction: [0, 1],
+        force: 0,
+        gravity: 0,
+        angle: 0,
+      };
+      const directions = [
+        [0, 1],
+        [0, -1],
+        [1, 0],
+        [-1, 0],
+      ];
+      const angles = [0, Math.PI, (Math.PI / 2) * 3, Math.PI / 2];
+
+      // draw
+      function draw() {
+        context.clearRect(-width / 2, -height / 2, width, height);
+
+        context.beginPath();
+        context.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        context.fill();
+        context.closePath();
+
+        context.strokeStyle = "hsl(30, 15%, 90%)";
+        context.beginPath();
+        context.arc(0, 0, radius, 0, Math.PI * 2);
+        context.stroke();
+        context.closePath();
+
+        context.save();
+        context.rotate(physics.angle);
+        context.strokeStyle = "hsl(128, 40%, 45%)";
+        context.beginPath();
+        context.arc(0, 0, radius, Math.PI / 4, (Math.PI / 4) * 3);
+        context.stroke();
+        context.closePath();
+        context.restore();
+      }
+
+      // animation loop
+      function animate() {
+        draw();
+        const { gravity, force, direction } = physics;
+        const [dX, dY] = direction;
+        ball.x += (gravity - force) * dX;
+        ball.y += (gravity - force) * dY;
+
+        physics.gravity += 0.2;
+        if (force >= 0) {
+          physics.force -= 0.2;
+        }
+
+        const d = Math.sqrt(ball.x ** 2 + ball.y ** 2);
+        if (d < radius - ball.r) {
+          requestAnimationFrame(animate);
+        } else {
+          cancelAnimationFrame(animate);
+          button.style.visibility = "visible";
+          button.focus();
+        }
+      }
+
+      // reset
+      function start() {
+        ball.x = 0;
+        ball.y = 0;
+        physics.force = 0;
+        physics.gravity = 0;
+
+        animate();
+        button.style.visibility = "hidden";
+      }
+
+      // jump
+      function jump() {
+        physics.gravity = 0;
+        physics.force += 6;
+
+        const changeDirection = Math.random() < 0.25;
+        if (changeDirection) {
+          const index = Math.floor(Math.random() * directions.length);
+          physics.direction = directions[index];
+          physics.angle = angles[index];
+        }
+      }
+
+      // immediately draw the canvas
+      draw();
+
+      // start when clicking the button
+      button.addEventListener("click", () => start());
+
+      // jump when clicking the window/pressing the space bar
+      window.addEventListener("click", () => jump());
+      window.addEventListener("keydown", ({ keyCode }) => {
+        if (keyCode === 32) {
+          jump();
+        }
+      });
+    </script>
   </body>
 </html>
